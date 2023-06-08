@@ -1,0 +1,410 @@
+---
+title: "<p style=\"text-align:center;\">**<span style=\"font-size:26pt;\"><span style=\"font-family:Times
+  New Roman;\">US Police Fatal Shootings Analysis</span></span>**</p>"
+author: "<p style=\"text-align:center;\"><span style=\"font-size:16pt;\"><span style=\"font-family:Times
+  New Roman;\">Rashmi Yeole, Mahima Agarwal</span></span></p>"
+date: "<p style=\"text-align:center;\"><span style=\"font-size:16pt;\"><span style=\"font-family:Times
+  New Roman;\">12-Feb-2023</span></span></p>"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# **<span style="font-size:18pt;"><span style="font-family:Times New Roman;">1. Introduction</span></span>**
+<span style="font-size:14pt;"><span style="font-family:Times New Roman;">Police shootings in the United States result in a significant number of fatalities each year. The relationship between Police and Public has become tenous due to these shooting fatalities. The exact number of people killed by police in the US varies by year, but it typically ranges from several hundreds to over thousands.</span></span></p><span style="font-size:14pt;"><span style="font-family:Times New Roman;">In recent years, there has been growing concern about the number of people killed by police and the use of excessive force by law enforcement. This has led to increased scrutiny of police departments and calls for reforms to address these issues. Some of the proposed reforms include changes to police training, improved accountability measures, and the use of alternative forms of conflict resolution.</span></span></p><span style="font-size:14pt;"><span style="font-family:Times New Roman;">It's important to note that while the number of police shootings and related fatalities has received significant attention in recent years, the vast majority of police interactions with the public do not result in the use of deadly force. Police officers are trained to use force only when necessary to protect themselves or others, and the vast majority of officers use force responsibly and in accordance with the law.</span></span></p><span style="font-size:14pt;"><span style="font-family:Times New Roman;">In conclusion, police shootings and fatalities resulting from such shootings remain a significant problem in the United States and continue to be a subject of public concern and political debate.</span></span></p>
+
+# **<span style="font-size:18pt;"><span style="font-family:Times New Roman;">2. About dataset</span></span>**
+<span style="font-size:14pt;"><span style="font-family:Times New Roman;">For the analysis of the US Police Shootings Data we have been using a dataset provided from a research project called The Mapping Police Violence. This project collects data on all police killings, including those that are rules justified as well as those that are found to be unjustified from the year of 2013 to 2022.</span></span></p><span style="font-size:14pt;"><span style="font-family:Times New Roman;">The MPV dataset includes information on the victim, such as their race and age, as well as details about the circumstances of the killing, including the type of weapon used and the reason for the police interaction. The dataset also includes information on the officers involved in the killing, including their race department. But we are not going to study the details of officers conducting the investigations and involved since the data is inconsistent for the cases and might lead to biased conclusion. To avoid that we will be focusing on victims and the situations to analyse if the deadly force enforcement was justified or unjustified using different visualizations to understand the trend of US Police Shootings Fatalities.</span></span></p>
+
+```{r warning=FALSE, include=FALSE}
+library(ggplot2)
+library(plyr)
+library(dplyr)
+library(magrittr)
+library(gridExtra)
+library(tidyr)
+library(corrplot)
+library(RColorBrewer)
+library(ggalluvial)
+library(treemapify)
+library(ggfittext)
+library(plotly)
+library(scales)
+library(mapdata)
+library(maps)
+library(maptools)
+library(mapproj)
+library(colorspace)
+library(lubridate)
+library(ggalluvial)
+library(gifski)
+library(gganimate)
+library(transformr)
+library(hrbrthemes)
+library(ggsci)
+library(av)
+library(tidyverse)
+library(gapminder)
+library(ggiraph)
+library(data.table)
+library(usmap)
+library(plotrix)
+library(viridis)
+library(fmsb)
+library(pandoc)
+library(htmlwidgets)
+library(ggthemes)
+library(ggiraph)
+
+df_uspoliceshootings<-read.csv("Mapping Police Violence.csv")
+```
+
+```{r warning=FALSE, include=FALSE}
+summary(df_uspoliceshootings) ## to get the summary of the dataset
+str(df_uspoliceshootings) ##to understand internal structure of the dataset
+TopAttributes<-head(df_uspoliceshootings,10) ## to view top 10 attributes of the dataset
+TopAttributes
+
+is.na(df_uspoliceshootings) ## to identify the missing values
+na.omit(df_uspoliceshootings) ## to handle the missing values
+```
+
+```{r warning=FALSE, include=FALSE}
+datetxt <- as.Date(df_uspoliceshootings$date)
+df_datesplit <- data.frame(
+                 year = as.numeric(format(datetxt, format = "%Y")),
+                 month = as.character(format(datetxt, format = "%B")),
+                 day = as.numeric(format(datetxt, format = "%d")))
+df_new=cbind(df_uspoliceshootings,df_datesplit)
+df_new
+```
+
+# **<span style="font-size:18pt;"><span style="font-family:Times New Roman;">3. Section 1 - Timeline and Geographical Analysis of US Police Shootings Fatalities</span></span>**
+
+<span style="font-size:14pt;"><span style="font-family:Times New Roman;">In this section, we are going to study the trends of US Police shooting fatalities in US from 2013 to 2022 over the US geographical states to understand if cases throughout are increasing eventually and to identify top impacted US States.</span></span></p>
+
+## **<span style="font-size:16pt;"><span style="font-family:Times New Roman;">3.1 What is the trend of Fatal US Police Shootings over a period of 2013 to 2022?</span></span>**
+
+<span style="font-size:14pt;"><span style="font-family:Times New Roman;">In this task for the timeline of US Police fatal shooting events occurred in the past decade, we wanted to analyze if there's a pattern in the number of killings by the police from 2013 to 2022 in the USA. To implement this, we decided to plot a Line chart showing the count of shooting cases that took place in the past decade.</span></span></p>
+
+```{r echo=FALSE, warning=FALSE}
+shootingcases_count <- df_new %>% 
+    select(year) %>% # selecting  "name" variable in data frame 
+    group_by(year) %>% 
+    summarize(shootingcases_count=n()) #summarizing and grouping the variable attributes
+Plot1<- ggplot(data = shootingcases_count, aes(x = year, y = shootingcases_count)) + geom_line(size = 1.0,color="steelblue4") + ggtitle("Fig.1 - Number of shooting cases reported from 2013 to 2022")   +  scale_x_continuous(breaks=seq(2013,2022,1)) + expand_limits(y=950) + theme_bw() +theme_classic() + theme(plot.title = element_text(hjust=0.5, vjust =3, face ="bold", size =11))
+Plot1 %>% plotly::ggplotly()
+```
+
+<span style="font-size:14pt;"><span style="font-family:Times New Roman;">From the above line chart, we can definitely depict that from 2013 there has been substantial increment in the trend for US Police Shooting Fatal Cases. US Police have killed 59 more people through November in 2022 compared to the same period in the previous year. This enable us to study the factors involved with these cases further in this report.</span></span></p>
+
+## **<span style="font-size:16pt;"><span style="font-family:Times New Roman;">3.2 Which are the top 3 highest US police fatal shooting prone states?  </span></span>**
+
+<span style="font-size:14pt;"><span style="font-family:Times New Roman;">In this task, to understand which areas of the United States have higher shooting rates, we plotted the US map to check for number of shooting cases reported in different states of US.</span></span></p>  
+
+```{r echo=FALSE, warning=FALSE}
+
+statecount <- df_new %>% 
+  select(state) %>% 
+  group_by(state) %>% 
+  summarize(statecount=n())
+
+Plot2<- plot_usmap(data = statecount, values = "statecount", color = "white") + scale_fill_continuous(low = "white",high = "steelblue4", name = "Shooting Cases by states in US from 2013 to 2022", label = scales::comma) + theme(legend.position = "bottom")+ ggtitle("Fig.2 - Total Number of shooting cases reported in different states of US")+ theme(plot.title = element_text(hjust = 0.15, vjust =2, face ="bold", size = 11))
+Plot2%>% plotly::ggplotly()
+```
+
+<span style="font-size:14pt;"><span style="font-family:Times New Roman;">From the above Map, we understood that police have killed people in around 50 states with Texas, Florida and California accounting for 31% of all the killings in the United States from the year 2013 to 2022.</span></span></p>
+
+## **<span style="font-size:16pt;"><span style="font-family:Times New Roman;">3.3 How are the US police shooting cases intensity distributed over the decade for all the states in US?</span></span>**
+
+<span style="font-size:14pt;"><span style="font-family:Times New Roman;">In this task, to understand the number of killings in different states of the US in each year, we plotted a heat map to analyze the intensity of killings in each state for the last decade (2013 - 2022).</span></span></p>
+
+```{r echo=FALSE, warning=FALSE}
+df_year <- df_new %>% 
+  group_by(state, year) %>% 
+  summarise(Shootingcases_reported =n(), .groups = 'drop') %>% 
+  filter(Shootingcases_reported >= 25) %>% 
+  as.data.frame()
+
+df_year$year = as.character(df_year$year)
+Plot3 <- ggplot(df_year, aes(state, year)) + geom_tile(aes(fill = Shootingcases_reported), ) + ggtitle("Fig.3 -  Shooting cases reported from 2013 to 2022 in different states of US")+ theme(plot.title = element_text(hjust = 0, vjust =2, face ="bold", size = 11))+ theme_bw() +theme_classic() + theme(legend.position = "bottom")
+Plot3%>% plotly::ggplotly()
+
+```
+
+<span style="font-size:14pt;"><span style="font-family:Times New Roman;">From the above Heat Map, we can deduce the intensity of shooting events over past three years viz. 2022, 2021, 2020 has increased gradually by 30% and we can see shaded portions more than we have seen from 2013 to 2018. This gives us fair idea along with the highest report of cases in states California, Florida, and Texas that there is increased intensity of these events over a period of last decade.</span></span></p>
+
+# **<span style="font-size:18pt;"><span style="font-family:Times New Roman;">4. Section 2 - US Police Shooting Cases Personal Background Analysis</span></span>**
+
+<span style="font-size:14pt;"><span style="font-family:Times New Roman;">As we studied in the previous section about the timeline and geographic locations of the Fatal US Police Shooting Cases, from that analysis we have 3 top impacted states with these events viz. California (CA), Florida (FL), & Texas (TX). In this section, we will be studying different factors for further analysis such as Age, Race, Mental Illness/Health, & Cause of Death to understand some interesting findings related to these Fatal Shooting Cases by US Police which will either support or forfeit the controversies rumoring around the news in the public.</span></span></p>
+
+## **<span style="font-size:16pt;"><span style="font-family:Times New Roman;">4.1 What is the age range which is more susceptible to these Fatal Police Shooting events for top 3 states in US? </span></span>**
+
+<span style="font-size:14pt;"><span style="font-family:Times New Roman;">In this task, to understand the age range of victims in the top 3 highest impacted states of US we have plotted a funnel chart to understand the more susceptible age range of these US Police Fatal Shooting events. We have highlighted top 3 states with different colors against the age range to get a fair idea about the age ranges.</span></span></p>
+
+```{r echo=FALSE, warning=FALSE}
+df_age_ca <- as.data.frame((df_new[!(is.na(df_new$age) | df_new$age == ""), ] %>% filter(state == 'CA'))$age)
+colnames(df_age_ca) <- c('Age')
+df_age_ca = data.table(df_age_ca)
+df_age_ca = as.data.frame(df_age_ca[, .N , keyby = .(range = cut(Age, breaks =
+                                                             seq(0, 110, by = 10)))])
+df_age_ca$range = as.character(df_age_ca$range)
+
+
+df_age_fl <- as.data.frame((df_new[!(is.na(df_new$age) | df_new$age == ""), ] %>% filter(state == 'FL'))$age)
+colnames(df_age_fl) <- c('Age')
+df_age_fl = data.table(df_age_fl)
+df_age_fl = as.data.frame(df_age_fl[, .N , keyby = .(range = cut(Age, breaks =
+                                                                   seq(0, 110, by = 10)))])
+df_age_fl$range = as.character(df_age_fl$range)
+
+
+df_age_tx <- as.data.frame((df_new[!(is.na(df_new$age) | df_new$age == ""), ] %>% filter(state == 'TX'))$age)
+colnames(df_age_tx) <- c('Age')
+df_age_tx = data.table(df_age_tx)
+df_age_tx = as.data.frame(df_age_tx[, .N , keyby = .(range = cut(Age, breaks =
+                                                                   seq(0, 110, by = 10)))])
+df_age_tx$range = as.character(df_age_tx$range)
+
+fig <- plot_ly()
+fig <- fig %>%
+  add_trace(type = "funnel", name = 'CA',
+            y = c(df_age_ca$range),
+            x = c(df_age_ca$N),
+            color= "steelblue4")
+fig <- fig %>%
+  add_trace(type = "funnel", name = 'TX',
+            y = c(df_age_tx$range),
+            x = c(df_age_tx$N),
+            color = "dodgerblue4")
+fig <- fig %>%
+  add_trace(type = "funnel", name = 'FL',
+            y = c(df_age_fl$range),
+            x = c(df_age_fl$N),
+            color = "steelblue2")
+fig <- fig %>%
+  layout(title = 'Fig.4 - Shooting Cases Age Analysis',
+         yaxis = list(categoryarray = c(df_age_tx$range), title = 'Age Range'))
+fig
+
+
+```
+
+<span style="font-size:14pt;"><span style="font-family:Times New Roman;">From the above funnel chart we can definitely conclude that based on the data people in the range of 20-40 years are most likely to be the victim of Fatal US Police shootings followed by people who are in the age group of 40-50. Seems like, susceptibility risk peaks between the ages of 20 years and 35 years for all 3 states in US.</span></span></p>
+
+## **<span style="font-size:16pt;"><span style="font-family:Times New Roman;">4.2 What is the ethnicity of the maximum US Police Fatal Shootings victims in the top 3 states? </span></span>**
+
+<span style="font-size:14pt;"><span style="font-family:Times New Roman;">In this task, to understand the racial factor of the victims in the US Police Shooting events for which we have plotted a pie-chart to have a overview of all the race's people involved in these events highlighted with the percent of Shooting cases count.</span></span></p>
+
+```{r echo=FALSE, warning=FALSE}
+df_race = df_new[!(is.na(df_new$race) | df_new$race == ""), ] %>% 
+  filter(state == 'CA' | state == 'FL' | state == 'TX') %>% 
+  group_by(race) %>% 
+  summarise(total_count = n(), .groups ='drop') %>% 
+  as.data.frame()
+
+pie(
+  x = df_race$total_count,
+  labels = paste0(round(
+    100 *
+      df_race$total_count / sum(df_race$total_count), 1
+  ), "%"),
+  col = c("steelblue2", "slategray3", "lightblue", "lightsteelblue", "lightseagreen", "turquoise1", "lightskyblue"),
+  main = "Fig.5 - Shooting Cases Analysis by Race"
+)
+legend(x=1.2,y=0.3,inset=0,
+       df_race$race,
+       fill = c("steelblue2", "slategray3", "lightblue", "lightsteelblue", "lightseagreen", "turquoise1", "lightskyblue"), cex=0.41,text.width=0.79
+       )
+                
+```
+
+<span style="font-size:14pt;"><span style="font-family:Times New Roman;">From the above pie-chart, we can conclude that cumulatively in all the top 3 highest US Police shooting impacted states race "Hispanic" has been more prominently affected as of now 33.3% and followed by people with "White" (32.6%) and "Black" (21%) ethnicity. These numbers are bit indistinct to confirm if any racial biased has been conducted during these events by the US Police.</span></span></p>
+
+## **<span style="font-size:16pt;"><span style="font-family:Times New Roman;">4.3 Are there any signs of Mental Illness with the US Police Fatal Shooting Cases? </span></span>**
+
+<span style="font-size:14pt;"><span style="font-family:Times New Roman;">In this task, we will be analyzing the mental health factor of the Fatal US Police Shooting Case victims to understand if we can track any pattern of people being drugged or suffering from mental health issues forcing US police to enforce the deadly shooting actions. For this analysis we have plotted a Donut Chart which will give us a percentage of people under drug/alcohol influence or suffering from any mental health issues or being absolutely sober/normal or unable to determine any of the given category for the top 3 impacted states in US.</span></span></p>
+
+```{r echo=FALSE, warning=FALSE}
+df_mental_illness = df_new[!(is.na(df_new$signs_of_mental_illness) |
+                 df_new$signs_of_mental_illness == ""), ] %>% filter(state == 'CA' | state == 'FL' | state == 'TX') %>% group_by(signs_of_mental_illness) %>% summarise(total_count = n(), .groups =
+                                                                                                                                'drop') %>% as.data.frame()
+
+df_mental_illness$total_count = round(
+  100 *
+    df_mental_illness$total_count / sum(df_mental_illness$total_count), 1
+)
+
+hsize <-2.3
+
+df_mental_illness <- df_mental_illness %>% 
+  mutate(x = hsize)
+
+ggplot(df_mental_illness, aes(x = hsize, y = total_count, fill = signs_of_mental_illness)) +
+  geom_col(color = "black") +
+  geom_text(aes(label = paste0(total_count, "%")),
+            position = position_stack(vjust = 0.5)) +
+  coord_polar(theta = "y") +
+  xlim(c(0.2, hsize + 0.9)) + theme(panel.background = element_rect(fill = "white"),
+                                    panel.grid = element_blank(),
+                                    axis.title = element_blank(),
+                                    axis.ticks = element_blank(),
+                                    axis.text = element_blank()) + ggtitle("Fig.6 - Shooting Cases Anlysis by Mental Health") + theme(plot.title = element_text(hjust = 0, vjust =2, face ="bold", size = 11)) + scale_fill_brewer() + theme(legend.position = "bottom")
+
+```
+
+<span style="font-size:14pt;"><span style="font-family:Times New Roman;">From the above Donut Chart we can say that 61.9% of the US Police Fatal Shooting Case victims were absolutely normal/sober and were not under any drug/alcohol influence. Along with this, we have 18.9% of victims having mental health issues and and 4.2% under drug/alcohol influence. This could be alarming since for 61.9% of normal victims US Police opted shooting them dead which leads to the following questions:
+<span style="font-size:14pt;"><span style="font-family:Times New Roman;">1. Were these victims that dangerous to public being in normal state?</span></span></p>
+<span style="font-size:14pt;"><span style="font-family:Times New Roman;">2. Could US police have opted for another action to get the situation under control for such victims?</span></span></p>
+<span style="font-size:14pt;"><span style="font-family:Times New Roman;">3. Is there any personal biased or intention involved behind these deadly shooting events?</span></span></p>
+<span style="font-size:14pt;"><span style="font-family:Times New Roman;">These all above questions remains unanswered as we do not have enough data to support or contradict these theories.</span></span></p>
+
+## **<span style="font-size:16pt;"><span style="font-family:Times New Roman;">4.4 What is the major cause of death for these US Police Fatal Shooting victims ? </span></span>**
+
+<span style="font-size:14pt;"><span style="font-family:Times New Roman;">In this task, we will be analyzing the major cause of deaths in the Fatal US Police Shootings. We have different "cause of death" categories with which we can come up with a supporting theory that in each of the three states which category is more prominent and evident from the circumstantial perspective. In this analysis we have only considered the cause of death categories which have significant number of shooting cases reported under them and excluding the others since it will be difficult for us to analyse those categories based of couple of cases reported.</span></span></p>
+
+```{r echo=FALSE, warning=FALSE}
+# split cause_of_death by delimiter, introduce one row for each cause
+df_cause_of_death = separate_rows(df_new, cause_of_death, sep = ",", convert = FALSE)
+
+# state wise counts for each cause of death
+df_state_cause_count <- df_cause_of_death[!(is.na(df_cause_of_death$cause_of_death) | df_cause_of_death$cause_of_death == ""), ] %>% filter(state == 'CA' | state == 'TX' | state == 'FL') %>% group_by(state, cause_of_death) %>% summarise(total_count =
+                                                                                                                       n(), .groups = 'drop') %>% as.data.frame() %>% filter(total_count >= 10)
+
+Plot7<-ggplot(df_state_cause_count, aes(fill = state, y = total_count, x =
+                                   state)) +
+  scale_y_continuous(breaks = seq(from = 0, to = 2000, by = 200)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  scale_fill_viridis(discrete = T, option = "E") +
+  ggtitle("Fig.7 Cause of deaths analysis by states") + 
+  facet_wrap(~ cause_of_death) + theme_bw() + scale_fill_brewer() + theme_classic() +theme(plot.title = element_text(hjust=0.5, vjust =3, face ="bold", size =11)) + theme(legend.position = "bottom")
+Plot7%>% plotly::ggplotly()
+```
+
+<span style="font-size:14pt;"><span style="font-family:Times New Roman;">From the above bar charts, we can conclude that for major number of incidents "Gunshot" is the prominent cause of death. From this we also conclude that police shootings and incidents of police brutality contribute significantly to cycles of distrust and community violence.</span></span></p>
+
+# **<span style="font-size:18pt;"><span style="font-family:Times New Roman;">5. Section 3 - Circumstantial Analysis of US Police Shootings Fatalities</span></span>**
+
+<span style="font-size:14pt;"><span style="font-family:Times New Roman;">From the previous sections, after analyzing the victims personal background data for predicting the US Police Fatal Shooting patterns and trends in this section, we will analyse the situations of the US Police Shooting events. In our data set we have data from Washington Post which is compiling a database of every fatal shooting in the United States by a police officer in the line of duty.The Post began tracking details about each police-involved killing in the United States — the race of the deceased, the circumstances of the shooting, whether the person was armed and whether the person was experiencing a mental health crisis — by manually calling local news reports, collecting information from law enforcement websites and social media, and monitoring independent databases such as Fatal Encounters and the now-defunct Killed by Police project. Though, this data is bit inconsistent and not in good shape to be utilized for analysis but we have considered couple of attributes from this data to support our analysis through this report.</span></span></p>
+
+## **<span style="font-size:16pt;"><span style="font-family:Times New Roman;">5.1 Did US Police received a call for service during Fatal Shooting Events? </span></span>**
+
+<span style="font-size:14pt;"><span style="font-family:Times New Roman;">In this task, we have to analyze whether US Police have received a call for service regarding any fatal or dangerous incident being reported by the public on the basis of which we can understand how action taken by US Police against victim is justified. This theory wont be summing up to the final conclusion since many other factors can also be influencing the circumstances apart from the Call For Service attribute.</span></span></p>
+
+```{r echo=FALSE, warning=FALSE}
+df_call_for_service = df_new[!(is.na(df_new$call_for_service) | df_new$call_for_service == ""), ] %>% filter(state=="FL"| state=="TX"| state=="CA") %>%
+select(call_for_service, state) %>% #selecting "call for service" variable in data frame
+group_by(state, call_for_service) %>%
+summarize(shootingcases_count=n(),.groups = 'drop' ) #summarizing and grouping the variable attributes
+Plot8 <- ggplot(df_call_for_service, aes(x= state, y=shootingcases_count, fill= call_for_service)) +
+geom_bar(stat="identity", width=0.7,position=position_dodge(width=0.9))+
+coord_flip() + theme_classic()+ scale_fill_brewer() +ggtitle("Fig.8 Calls for Service record for top 3 States") + theme(legend.position = "bottom") + theme(plot.title = element_text(hjust=0.5, vjust =3, face ="bold", size =11))
+Plot8%>% plotly::ggplotly()
+```
+<span style="font-size:14pt;"><span style="font-family:Times New Roman;">From the above Clustered Bar Charts, we can see maximum times a Call For service has been made and US Police was able to reach the incident location to help the public. But from the, same graph we there were significant cases where call for service was not made and still US Police has shot victim dead. This could be bit ambiguous to come up with some fine conclusion how US Police has been informed about the incidents in the cases where Call for service is not requested.</span></span></p>
+
+## **<span style="font-size:16pt;"><span style="font-family:Times New Roman;">5.2 What was the threat level from Shooting Case victim? </span></span>**
+
+<span style="font-size:14pt;"><span style="font-family:Times New Roman;">In this task, from the Washington Post itself we have the data for Threat Levels from Shooting Victims which could lead US Police to shot them dead on-spot to take the situation under-control. For this we have made an spread analysis if the Shooting Event victim was really threatful according to the circumstances to the US Police.</span></span></p>
+
+```{r echo=FALSE, warning=FALSE}
+
+##Function of creating beautiful radar chart
+
+create_beautiful_radarchart <- function(data, color = "#00AFBB", 
+                                        vlabels = colnames(data), vlcex = 0.75,
+                                        caxislabels = NULL, title = NULL, ...){
+  radarchart(
+    data, axistype = 1,
+    # Customize the polygon
+    pcol = color, pfcol = scales::alpha(color, 0.5), plwd = 1, plty = 1,
+    # Customize the grid
+    cglcol = "black", cglty = 1, cglwd = 0.8,
+    # Customize the axis
+    axislabcol = "grey80", 
+    # Variable labels
+    vlcex = vlcex, vlabels = vlabels,
+    caxislabels = caxislabels, title = title, ...
+  )
+}
+ 
+
+df_threat <- df_new %>% filter(!(is.na(df_new$wapo_threat_level) | df_new$wapo_threat_level == "")) %>% filter(state == 'CA' | state == 'FL' | state == 'TX') %>% group_by(wapo_threat_level, state) %>% summarise(total_count = n(), .groups = 'drop') %>% as.data.frame()
+df_threat_CA <- df_threat %>% filter(state == 'CA') %>% as.data.frame()
+df_threat_FL <- df_threat %>% filter(state == 'FL') %>% as.data.frame()
+df_threat_TX <- df_threat %>% filter(state == 'TX') %>% as.data.frame()
+df_threat2 <- as.data.frame(t(data.frame(max = max(df_threat$total_count), min = min(df_threat$total_count), threat_level_CA = df_threat_CA$total_count, threat_level_FL = df_threat_FL$total_count, threat_level_TX = df_threat_TX$total_count)))
+colnames(df_threat2) <- c(df_threat_CA$wapo_threat_level)
+create_beautiful_radarchart(
+    data = df_threat2,     color = c("midnightblue", "yellow", "lightblue"), title = "Fig. 9 Spread Analysis for Threat Level")
+# Add an horizontal legend
+legend(
+  x = "bottomright", legend = rownames(df_threat2[-c(1,2),]), horiz = FALSE,
+  bty = "n", pch = 5 , col = c("midnightblue", "yellow", "lightblue"),
+  text.col = "black", cex = 1, pt.cex = 1.5
+  )
+ 
+```
+
+<span style="font-size:14pt;"><span style="font-family:Times New Roman;">From the above spider chart, we can clearly see the threat level from Shooting event victim was more since for "Attack" category for all the top 3 states we have threat level more than or equal to 50%. We can see threat level for attack was maximum in California (100%) followed by Texas (75%) and Florida (50%).With this threat level US Police shooting the criminal dead could be the appropriate action but again there could be another action of control to have a situation under the US Police control.</span></span></p>
+
+## **<span style="font-size:16pt;"><span style="font-family:Times New Roman;">5.3 What is the relation between encounter type and flee status of the Shooting Case victim? </span></span>**
+
+<span style="font-size:14pt;"><span style="font-family:Times New Roman;">In this last section of the report we will be doing the final analysis to figure out the relation between the attributes Encounter Type and Flee Status (Obtained from Washington Post) using Alluvial Diagram for the top 3 highest impacted states in US.</span></span></p> 
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+df_encounter_flee <- df_new
+df_encounter_flee$encounter_type <- sub("^Domestic Disturbance.*", "Domestic Disturbance", df_encounter_flee$encounter_type) 
+df_encounter_flee$encounter_type <- sub("^Other Crimes Against People.*", "Other Crimes Against People", df_encounter_flee$encounter_type)
+df_encounter_flee$encounter_type <- sub("^Part 1 Violent Crime.*", "Part 1 Violent Crime", df_encounter_flee$encounter_type)
+df_encounter_flee$encounter_type <- sub("^Person with a [w|W]eapon.*", "Person with a Weapon", df_encounter_flee$encounter_type)
+df_encounter_flee$encounter_type <- sub("^Traffic Stop.*", "Traffic Stop", df_encounter_flee$encounter_type)
+df_encounter_flee$encounter_type <- sub("^(?:Altercation|Assistance|Destruction of property|Part 1 Attempted break-in).*", "Misc", df_encounter_flee$encounter_type)
+df_encounter_flee$wapo_flee <- sub("^Foot, Car$", "Car, Foot", df_encounter_flee$wapo_flee)
+
+
+df_encounter_flee = df_encounter_flee[(!(is.na(df_encounter_flee$encounter_type) |
+                                           df_encounter_flee$encounter_type == "")) &
+                      (!(is.na(df_encounter_flee$wapo_flee) |
+                           df_encounter_flee$wapo_flee == "")), ] %>% 
+  filter(state == 'CA' | state == 'FL' | state == 'TX') %>% 
+  group_by(encounter_type, wapo_flee, state) %>% 
+  summarise(Police_shooting_cases = n(), .groups ='drop') %>% 
+  as.data.frame()
+
+ggplot(df_encounter_flee,
+       aes(y = Police_shooting_cases, axis1 = encounter_type, axis2 = wapo_flee)) +
+  geom_alluvium(aes(fill = state), width = 1 / 32) +
+  geom_stratum(width = 1/4, fill = "white", color = "black") +
+  geom_label(stat = "stratum", aes(label = after_stat(stratum))) +
+  scale_x_discrete(breaks = 1:2, labels = c("Encounter Type", "Flee"),
+                   expand = c(0.1, 0.1)) +
+  scale_fill_brewer() +
+  ggtitle("Fig. 10 Relation between Encounter Type and Flee Status ") + theme_bw()+ theme_classic() +theme(plot.title = element_text(hjust=0.5, vjust =3, face ="bold", size =11)) +theme(legend.position = "bottom") 
+```
+
+<span style="font-size:14pt;"><span style="font-family:Times New Roman;">From the above alluvial chart, for most of the encounter_type categories - Shooting Case victim did not tried escaping from the incident location. But on the other hand, encounter type categories such as Traffic Stop, Part 1 Violent Crime and Other Non-violent offense victims did tried escaping from the incident location. In this scenario for both the cases, threat level and escaping could be the major factors involved in that circumstances for US Police to shot victim dead.</span></span></p>
+
+# **<span style="font-size:18pt;"><span style="font-family:Times New Roman;">6. Conclusion</span></span>**
+
+<span style="font-size:14pt;"><span style="font-family:Times New Roman;">From the Mapping Police Violence dataset, we covered three major aspects based on Geographical and Yearly Timelines, the Personal background of the victims who were killed in different states of the US, and Circumstantial Analysis on the basis of threat level, encounter type, and call for service.</span></span></p> 
+<span style="font-size:14pt;"><span style="font-family:Times New Roman;">To start with, we plotted a Line chart to understand a pattern in the number of killings from 2013 to 2022 and thus we observed that the shootings have increased gradually throughout these years with 2022 being at its peak for the most recorded killings.Further, we plotted a geographical map of the USA to see which states were largely affected due to the shootings. California, Texas, and Florida were the top-most affected states due to Police shootings. In order to further analyze the killings in different states with respect to each year, we plotted a heat map to understand the intensity of killings in each state of the US.</span></span></p> 
+<span style="font-size:14pt;"><span style="font-family:Times New Roman;">For the second section, we focused on the personal background of the victims on the basis of their age, gender, and race. To understand the killings of shooting case victims, we did an age analysis for the top 3 most affected states using a Funnel chart. We observed that the risk of being killed by police peaks between the ages of 20 and 35 years for men and women. Further, we tried to study if Race has been an important parameter for US killings using a Pie chart to plot the number of incidents based on Race. From this, we understood that police officers are significantly more likely to kill Black and Hispanic civilians, followed by their White peers, even when civilians are unarmed and do not exhibit mental illness. With this we can conclude to say racism is not that pivotal from this dataset to support the controversy of Racial Discrimination by US Police. The later of section our goal was to understand how shooting cases were analyzed by Mental health. For this, we used a Doughnut Chart to understand the mental condition of the victim and to gauge if he/she was under the influence of alcohol or drugs at the time of the attack.Moving further, it was important to know the major causes of shootings in each state. To understand this, we used Bar charts that represented the major causes such as Gunshots, Beaten, vehicles, tasers, and Physical Restraint with respect to California, Florida, and Texas as these were the top-most affected states. From our analysis, we observed that the majority of the killings were due to Gunshots. From this we conclude that maximum number of normal/sober people have been killed during the shooting event via Gunshot and we propose to have a special training of US Police officers to get situation under control without enforcing the deadly actions.</span></span></p>
+<span style="font-size:14pt;"><span style="font-family:Times New Roman;">In the last section of our report we intend to find if US Police was called for service at the incident location which shows the efficiency of the US Police to attend the crime locations. Along with that, we also tried to analyse the threat level from criminals who were shot dead during the event to see if US Police was reluctant on shooting thewm dead or was their any other intentions involve to influence. From that we conclude to say that the threat level of Attack was maximum in all the top 3 states where US Police shot the criminal dead. We also tried finding a relation between encounter type and flee status since experts, law enforcement groups, and the US Department of Justice recommend that police be banned from shooting at people in moving vehicles. These shootings are particularly ineffective and dangerous, since shooting the driver can make the vehicle an uncontrollable threat to both officers and the public. Despite this, most police departments continue to allow officers to shoot people in these situations. Our analysis suggests a substantial proportion of all killings by police could have been prevented and that specific policies and practices might prevent police killings in the future.</span></span></p> 
+
+# **<span style="font-size:18pt;"><span style="font-family:Times New Roman;">7. References</span></span>**
+
+<span style="font-size:14pt;"><span style="font-family:Times New Roman;">https://mappingpoliceviolence.org/ </span></span></p> 
+
+<span style="font-size:14pt;"><span style="font-family:Times New Roman;"> https://www.washingtonpost.com/crime-law/2021/12/09/fbi-police-shooting-data/ </span></span></p> 
+
+<span style="font-size:14pt;"><span style="font-family:Times New Roman;">https://www.theguardian.com/us-news/2022/jul/28/hunted-one-in-three-people-killed-by-us-police-were-fleeing-data-reveals </span></span></p> 
+
+<span style="font-size:14pt;"><span style="font-family:Times New Roman;"> https://journals.sagepub.com/doi/full/10.1177/21533687211047943 </span></span></p> 
+
+
+
